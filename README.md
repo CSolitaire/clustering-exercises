@@ -1,6 +1,7 @@
 # Clustering
 
-clustering_cartoon.png
+[clustering_cartoon](https://www.quora.com/What-is-clustering)
+
 ### Learning Goals
 
 1. Be able to discuss and discover use cases for clustering across multiple industries.
