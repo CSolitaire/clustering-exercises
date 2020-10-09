@@ -19,9 +19,19 @@ def new_zillow_data():
     write it to a csv file, and returns the df. 
     '''
     sql_query = '''
-                select *
-                from properties_2017
-                join predictions_2017 using (id);
+                SELECT *
+                FROM properties_2017 as prop 
+                INNER JOIN (
+                    SELECT id, p.parcelid, logerror, transactiondate
+                    FROM predictions_2017 AS p
+                    INNER JOIN (
+                    SELECT parcelid,  MAX(transactiondate) AS max_date
+                    FROM predictions_2017 
+                    GROUP BY (parcelid)) AS sub
+                        ON p.parcelid = sub.parcelid
+                    WHERE p.transactiondate = sub.max_date
+                ) AS subq
+                    ON prop.id = subq.id;
                 '''
     df = pd.read_sql(sql_query, get_connection('zillow'))
     df.to_csv('zillow_df.csv')
