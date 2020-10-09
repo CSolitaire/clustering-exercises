@@ -1,6 +1,6 @@
 # Clustering
 
-[clustering_cartoon](https://www.quora.com/What-is-clustering)
+![clustering_cartoon](https://d2h0cx97tjks2p.cloudfront.net/blogs/wp-content/uploads/sites/2/2019/08/introduction-to-clustering.png)
 
 ### Learning Goals
 
