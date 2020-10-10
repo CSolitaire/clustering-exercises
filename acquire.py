@@ -20,7 +20,10 @@ def new_zillow_data():
     '''
     sql_query = '''
                 select * from properties_2017
-                join predictions_2017 using (parcelid)
+                join (select id, logerror, pid, tdate from predictions_2017 pred_2017
+                join (SELECT parcelid as pid, Max(transactiondate) as tdate FROM predictions_2017 GROUP BY parcelid) as sq1
+                on (pred_2017.parcelid = sq1.pid and pred_2017.transactiondate = sq1.tdate)) as sq2
+                on (properties_2017.parcelid = sq2.pid)
                 left join airconditioningtype using (airconditioningtypeid)
                 left join architecturalstyletype using (architecturalstyletypeid)
                 left join buildingclasstype using (buildingclasstypeid)
