@@ -10,7 +10,8 @@ from sklearn.preprocessing import StandardScaler, QuantileTransformer, PowerTran
 #################### Prepare ##################
 
 def data_prep(df, cols_to_remove=[], prop_required_column=.5, prop_required_row=.75):
-    
+    '''This function removes colums that have less then 50% of data and rows with less than 75% of data intact.  
+    It also allows a user to specifiy specific rows to remove upon request '''
     def remove_columns(df, cols_to_remove):  
         df = df.drop(columns=cols_to_remove)
         return df
@@ -27,9 +28,15 @@ def data_prep(df, cols_to_remove=[], prop_required_column=.5, prop_required_row=
     #df.dropna(inplace=True) # Drops all Null Values From Dataframe
     return df
 
+# How to Call the Function
+# df = prepare.data_prep(
+#     df,
+#     cols_to_remove=[],
+#     prop_required_column=.6,
+#     prop_required_row=.75
+# )
 
-
-
+######################################
 # def wrangle_zillow(path):
 #     '''This function makes all necessary changes to the dataframe for exploration and modeling'''
 #     df = pd.read_csv(path)
