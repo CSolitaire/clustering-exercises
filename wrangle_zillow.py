@@ -41,7 +41,7 @@ def new_zillow_data():
 def get_zillow_data(cached=False):
     '''
     This function reads in zillow customer data from Codeup database if cached == False 
-    or if cached == True reads in mall customer df from a csv file, returns df
+    or if cached == True reads in zillow df from a csv file, returns df
     '''
     if cached or os.path.isfile('zillow_df.csv') == False:
         df = new_zillow_data()
@@ -52,6 +52,7 @@ def get_zillow_data(cached=False):
 #################### Prepare ##################
 
 # Function to Prep Data (Delete Columns and Rows)
+
 def data_prep(df, cols_to_remove=[], prop_required_column=.5, prop_required_row=.75):
     
     def remove_columns(df, cols_to_remove):  
@@ -70,12 +71,9 @@ def data_prep(df, cols_to_remove=[], prop_required_column=.5, prop_required_row=
     df.dropna(inplace=True) # Drops all Null Values From Dataframe
     return df
 
-def wrangle_zillow():
-    df = pd.read_csv('zillow_df.csv')
-    
     # Rename duplicate column id/id with id_delete/id
-    def rename_columns(df):
-        df.columns = ['parcelid', 'typeconstructiontypeid', 'storytypeid',
+def rename_columns(df):
+    df.columns = ['parcelid', 'typeconstructiontypeid', 'storytypeid',
             'propertylandusetypeid', 'heatingorsystemtypeid', 'buildingclasstypeid',
             'architecturalstyletypeid', 'airconditioningtypeid', 'id_delete',
             'basementsqft', 'bathroomcnt', 'bedroomcnt', 'buildingqualitytypeid',
@@ -97,20 +95,17 @@ def wrangle_zillow():
             'airconditioningdesc', 'architecturalstyledesc', 'buildingclassdesc',
             'heatingorsystemdesc', 'propertylandusedesc', 'storydesc',
             'typeconstructiondesc']
-        df.drop(columns = ['id_delete','pid'], inplace = True)
+    df.drop(columns = ['id_delete','pid'], inplace = True)
     return df
 
-    # Rename columns with duplicate id's
-    df = rename_columns(df)
-
-    # Prep Data Function
-    df = data_prep(df)
-
+def split_df(df):
     # split dataset
     train_validate, test = train_test_split(df, test_size = .2, random_state = 123)
     train, validate = train_test_split(train_validate, test_size = .3, random_state = 123)
+    return train, validate, test
 
-    # Assign variables
+def scale_df(train, validate, test):
+     # Assign variables
     X_train = train
     X_validate = validate
     X_test = test
@@ -134,6 +129,23 @@ def wrangle_zillow():
     X_test_scaled = pd.DataFrame(X_test_scaled, 
                                     columns=X_test.columns.values).\
                                 set_index([X_test.index.values])
+    
+    return X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled
+
+def wrangle_zillow():
+    df = get_zillow_data(cached=True)
+    
+    # Rename columns with duplicate id's
+    df = rename_columns(df)
+
+    # Prep Data Function
+    df = data_prep(df)
+
+    # split dataset
+    train, validate, test = split_df(df)
+
+    # scale dataset
+    X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled = scale_df(train, validate, test)
 
     return df, X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled
 
