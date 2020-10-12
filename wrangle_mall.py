@@ -9,8 +9,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, QuantileTransformer, PowerTransformer, RobustScaler, MinMaxScaler
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
-from keras.models import Sequential
-from keras.layers import Dense
+from numpy import array
+from numpy import argmax
 
 #################### Acquire ##################
 
@@ -107,6 +107,9 @@ def df_summary(df):
 ######################################
 
 def quartiles_and_outliers(df):
+    # Visualize Data
+    df.hist(figsize=(24, 10), bins=20)
+
     def get_upper_outliers(s, k):
         '''
         Given a series and a cutoff value, k, returns the upper outliers for the
@@ -162,16 +165,14 @@ def data_prep(df, cols_to_remove=[], prop_required_column=.5, prop_required_row=
     df.dropna(inplace=True) # Drops all Null Values From Dataframe
     return df
 
-def prepare_inputs(df):
+def encode_and_bind(original_dataframe, feature_to_encode):
     '''
-    This function replaces categorical variable using OneHotEncoding
+    This function encodes categorical variables
     '''
-	data = asarray([['gender'])
-    # define one hot encoding
-    encoder = OneHotEncoder(sparse=False)
-    # transform data
-    onehot = encoder.fit_transform(data)
-    return df
+    dummies = pd.get_dummies(original_dataframe[[feature_to_encode]])
+    res = pd.concat([original_dataframe, dummies], axis=1)
+    res = res.drop([feature_to_encode], axis=1)
+    return(res) 
 
 def split_df(df):
     '''
@@ -211,14 +212,12 @@ def wrangle_mall(df):
     '''
     This function takes a SQL querry and returns several split and scaled dataframes
     '''
-    # Rename columns with duplicate id's
-    df = rename_columns(df)
 
     # Prep Data Function
     df = data_prep(df)
     
     # OneHotEncoding
-    df = prepare_inputs(df)
+    df = encode_and_bind(df, 'gender')
     
     # split dataset
     train, validate, test = split_df(df)
