@@ -57,10 +57,10 @@ def get_zillow_data(cached=False):
 
 #################### Prepare ##################
 
-# Function to Prep Data (Delete Columns and Rows)
-
 def data_prep(df, cols_to_remove=[], prop_required_column=.5, prop_required_row=.75):
-    
+    '''
+    This function removes columns and rows below a specified 'complete' threshold
+    '''
     def remove_columns(df, cols_to_remove):  
         df = df.drop(columns=cols_to_remove)
         return df
@@ -77,8 +77,10 @@ def data_prep(df, cols_to_remove=[], prop_required_column=.5, prop_required_row=
     df.dropna(inplace=True) # Drops all Null Values From Dataframe
     return df
 
-    # Rename duplicate column id/id with id_delete/id
 def rename_columns(df):
+    '''
+    This function renames duplicate columns (id) and deletes duplicate values (pid)
+    '''
     df.columns = ['parcelid', 'typeconstructiontypeid', 'storytypeid',
             'propertylandusetypeid', 'heatingorsystemtypeid', 'buildingclasstypeid',
             'architecturalstyletypeid', 'airconditioningtypeid', 'id_delete',
@@ -105,13 +107,29 @@ def rename_columns(df):
     return df
 
 def split_df(df):
+    '''
+    This function splits our dataframe in to train, validate, and test
+    '''
     # split dataset
     train_validate, test = train_test_split(df, test_size = .2, random_state = 123)
     train, validate = train_test_split(train_validate, test_size = .3, random_state = 123)
     return train, validate, test
 
+def cat_variables(df):
+    '''
+    This function turns all categorical variables in to cat code columns
+    '''
+    for col_name in df.columns:
+        if(df[col_name].dtype == 'object'):
+            df[col_name]= df[col_name].astype('category')
+            df[col_name] = df[col_name].cat.codes
+    return df
+
 def scale_df(train, validate, test):
-     # Assign variables
+    '''
+    This function scales data using the MinMaxScaler
+    '''
+    # Assign variables
     X_train = train
     X_validate = validate
     X_test = test
@@ -124,32 +142,31 @@ def scale_df(train, validate, test):
     X_validate_scaled = scaler.transform(X_validate)
     X_test_scaled = scaler.transform(X_test)
 
-    X_train_scaled = pd.DataFrame(X_train_scaled, 
-                                columns=X_train.columns.values).\
-                                set_index([X_train.index.values])
+    X_train_scaled = pd.DataFrame(X_train_scaled, columns = X_train.columns.values).set_index([X_train.index.values])
 
-    X_validate_scaled = pd.DataFrame(X_validate_scaled, 
-                                    columns=X_validate.columns.values).\
-                                set_index([X_validate.index.values])
+    X_validate_scaled = pd.DataFrame(X_validate_scaled, columns= X_validate.columns.values).set_index([X_validate.index.values])
 
-    X_test_scaled = pd.DataFrame(X_test_scaled, 
-                                    columns=X_test.columns.values).\
-                                set_index([X_test.index.values])
+    X_test_scaled = pd.DataFrame(X_test_scaled, columns= X_test.columns.values).set_index([X_test.index.values])
     
     return X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled
 
-def wrangle_zillow():
-    df = get_zillow_data(cached=True)
-    
+
+def wrangle_zillow(df):
+    '''
+    This function takes a SQL querry and returns several split and scaled dataframes
+    '''
     # Rename columns with duplicate id's
     df = rename_columns(df)
 
     # Prep Data Function
     df = data_prep(df)
-
+    
+    # Convert categorical colums to cat codes
+    df = cat_variables(df)
+    
     # split dataset
     train, validate, test = split_df(df)
-
+    
     # scale dataset
     X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled = scale_df(train, validate, test)
 
