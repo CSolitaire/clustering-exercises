@@ -172,9 +172,14 @@ def wrangle_zillow(df):
 
     return df, X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled
 
+# df, X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled = wrangle_zillow.wrangle_zillow(acquire.get_zillow_data(cached=False)) | To call function
+
     ################## Explore ####################
 
 def count_and_percent_missing_row(df):
+    '''
+    This function determines the count and percentage of rows are missing
+    '''
     percent_missing = df.isnull().sum() * 100 / len(df)
     total_missing = df.isnull().sum()
     missing_value_df = pd.DataFrame({'num_rows_missing': total_missing,
@@ -182,6 +187,9 @@ def count_and_percent_missing_row(df):
     return missing_value_df
 
 def count_and_percent_missing_column(df):
+    '''
+    This function returns the count and percentage of the missing rows
+    '''
     num_rows = df.loc[:].isnull().sum()
     num_cols_missing = df.loc[:, df.isna().any()].count()
     pct_cols_missing = round(df.loc[:, df.isna().any()].count() / len(df.index) * 100, 3)
@@ -193,6 +201,9 @@ def count_and_percent_missing_column(df):
     return missing_cols_and_rows_df
 
 def df_summary(df):
+    '''
+    This function returns all the summary information of the dataframe
+    '''
     print('The shape of the df:') 
     print(df.shape)  # df shape (row/column)
     print('\n')
@@ -220,3 +231,41 @@ def df_summary(df):
         display(df[col].value_counts(dropna=False).head(10))
         #display(df_resp[col].value_counts())  # Displays all Values, not just First 10
 
+# df_summary(df) | To call function
+
+######################################
+
+def quartiles_and_outliers(df):
+    def get_upper_outliers(s, k):
+        '''
+        Given a series and a cutoff value, k, returns the upper outliers for the
+        series.
+
+        The values returned will be either 0 (if the point is not an outlier), or a
+        number that indicates how far away from the upper bound the observation is.
+        '''
+        q1, q3 = s.quantile([.25, .75])
+        iqr = q3 - q1
+        upper_bound = q3 + k * iqr
+        return s.apply(lambda x: max([x - upper_bound, 0]))
+
+    def add_upper_outlier_columns(df, k):
+        '''
+        Add a column with the suffix _outliers for all the numeric columns
+        in the given dataframe.
+        '''
+        # outlier_cols = {col + '_outliers': get_upper_outliers(df[col], k)
+        #                 for col in df.select_dtypes('number')}
+        # return df.assign(**outlier_cols)
+        for col in df.select_dtypes('number'):
+            df[col + '_outliers'] = get_upper_outliers(df[col], k)
+        return df
+
+    add_upper_outlier_columns(df, k=1.5)    
+    outlier_cols = [col for col in df if col.endswith('_outliers')]
+    for col in outlier_cols:
+        print('~~~\n' + col)
+        data = df[col][df[col] > 0]
+        print(data.describe())
+
+# quartiles_and_outliers(df) | To call function
