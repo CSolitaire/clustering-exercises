@@ -2,6 +2,12 @@ import pandas as pd
 import numpy as np
 import os
 from env import host, user, password
+import scipy as sp 
+from env import host, user, password
+from sklearn.model_selection import train_test_split
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, QuantileTransformer, PowerTransformer, RobustScaler, MinMaxScaler
+
 
 #################### Acquire ##################
 
