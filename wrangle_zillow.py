@@ -203,19 +203,16 @@ def count_and_percent_missing_row(df):
                                      'pct_rows_missing': percent_missing})
     return missing_value_df
 
-def count_and_percent_missing_column(df):
-    '''
-    This function returns the count and percentage of the missing rows
-    '''
-    num_rows = df.loc[:].isnull().sum()
-    num_cols_missing = df.loc[:, df.isna().any()].count()
-    pct_cols_missing = round(df.loc[:, df.isna().any()].count() / len(df.index) * 100, 3)
-    missing_cols_and_rows_df = pd.DataFrame({'num_cols_missing': num_cols_missing,
-                                             'pct_cols_missing': pct_cols_missing,
-                                             'num_rows': num_rows})
-    missing_cols_and_rows_df = missing_cols_and_rows_df.fillna(0)
-    missing_cols_and_rows_df['num_cols_missing'] = missing_cols_and_rows_df['num_cols_missing'].astype(int)
-    return missing_cols_and_rows_df
+def nulls_finder_column(df):
+    rows = pd.DataFrame()    
+    rows['num_cols_missing'] = df.isnull().sum(axis=1)    
+    rows['pct_cols_missing'] = df.isnull().sum(axis=1) / df.shape[1]    
+    num_rows = rows.groupby('num_cols_missing').count()    
+    num_rows = num_rows.rename(columns ={'pct_cols_missing': 'num_rows'})    
+    pct_cols = rows.groupby('num_cols_missing').mean()    
+    result = pd.concat([pct_cols, num_rows], axis=1, sort=False)    
+    result = result.reset_index()
+    return result
 
 def df_summary(df):
     '''
@@ -240,7 +237,7 @@ def df_summary(df):
     print(count_and_percent_missing_row(df))
     print('\n')
     print('Count and percent missing per column')
-    print(count_and_percent_missing_column(df))
+    print(nulls_finder_column(df)
     print('\n')
     print('Value Counts per Column:')
     for col in df.columns:
