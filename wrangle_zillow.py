@@ -123,6 +123,9 @@ def cat_variables(df):
         if(df[col_name].dtype == 'object'):
             df[col_name]= df[col_name].astype('category')
             df[col_name] = df[col_name].cat.codes
+        else:
+            df[col_name]= df[col_name].astype('category')
+            df[col_name] = df[col_name].cat.codes
     return df
 
 def scale_df(train, validate, test):

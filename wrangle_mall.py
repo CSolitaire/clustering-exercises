@@ -165,14 +165,18 @@ def data_prep(df, cols_to_remove=[], prop_required_column=.5, prop_required_row=
     df.dropna(inplace=True) # Drops all Null Values From Dataframe
     return df
 
-def encode_and_bind(original_dataframe, feature_to_encode):
+def cat_variables(df):
     '''
-    This function encodes categorical variables
+    This function turns all categorical variables in to cat code columns
     '''
-    dummies = pd.get_dummies(original_dataframe[[feature_to_encode]])
-    res = pd.concat([original_dataframe, dummies], axis=1)
-    res = res.drop([feature_to_encode], axis=1)
-    return(res) 
+    for col_name in df.columns:
+        if(df[col_name].dtype == 'object'):
+            df[col_name]= df[col_name].astype('category')
+            df[col_name] = df[col_name].cat.codes
+        else:
+            df[col_name]= df[col_name].astype('category')
+            df[col_name] = df[col_name].cat.codes
+    return df 
 
 def split_df(df):
     '''
@@ -217,7 +221,7 @@ def wrangle_mall(df):
     df = data_prep(df)
     
     # OneHotEncoding
-    df = encode_and_bind(df, 'gender')
+    df = cat_variables(df)
     
     # split dataset
     train, validate, test = split_df(df)
