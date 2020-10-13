@@ -158,6 +158,10 @@ def wrangle_zillow(df):
     # Rename columns with duplicate id's
     df = rename_columns(df)
 
+    # Rescale lat and long
+    #df.latitude = df.latitude / 1000000
+    #df.longitude = df.longitude / 1000000
+
     # Prep Data Function
     df = data_prep(df)
     
