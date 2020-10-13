@@ -76,6 +76,35 @@ def get_zillow_data(cached=False):
 
 #################### Prepare ##################
 
+def rename_columns(df):
+    '''
+    This function renames and drops colums that are duplicated
+    '''
+    df.columns = ['parcelid', 'typeconstructiontypeid', 'storytypeid',
+           'propertylandusetypeid', 'heatingorsystemtypeid', 'buildingclasstypeid',
+           'architecturalstyletypeid', 'airconditioningtypeid', 'id_delete',
+           'basementsqft', 'bathroomcnt', 'bedroomcnt', 'buildingqualitytypeid',
+           'calculatedbathnbr', 'decktypeid', 'finishedfloor1squarefeet',
+           'calculatedfinishedsquarefeet', 'finishedsquarefeet12',
+           'finishedsquarefeet13', 'finishedsquarefeet15', 'finishedsquarefeet50',
+           'finishedsquarefeet6', 'fips', 'fireplacecnt', 'fullbathcnt',
+           'garagecarcnt', 'garagetotalsqft', 'hashottuborspa', 'latitude',
+           'longitude', 'lotsizesquarefeet', 'poolcnt', 'poolsizesum',
+           'pooltypeid10', 'pooltypeid2', 'pooltypeid7',
+           'propertycountylandusecode', 'propertyzoningdesc',
+           'rawcensustractandblock', 'regionidcity', 'regionidcounty',
+           'regionidneighborhood', 'regionidzip', 'roomcnt', 'threequarterbathnbr',
+           'unitcnt', 'yardbuildingsqft17', 'yardbuildingsqft26', 'yearbuilt',
+           'numberofstories', 'fireplaceflag', 'structuretaxvaluedollarcnt',
+           'taxvaluedollarcnt', 'assessmentyear', 'landtaxvaluedollarcnt',
+           'taxamount', 'taxdelinquencyflag', 'taxdelinquencyyear',
+           'censustractandblock', 'id', 'logerror', 'pid', 'tdate',
+           'airconditioningdesc', 'architecturalstyledesc', 'buildingclassdesc',
+           'heatingorsystemdesc', 'propertylandusedesc', 'storydesc',
+           'typeconstructiondesc']
+    df.drop(columns = ['id_delete','pid'], inplace = True)
+    df = df.drop(df.index[[77380]], inplace = True)
+
 def data_prep(df, cols_to_remove=[], prop_required_column=.5, prop_required_row=.75):
     '''
     This function removes columns and rows below a specified 'complete' threshold
@@ -91,40 +120,34 @@ def data_prep(df, cols_to_remove=[], prop_required_column=.5, prop_required_row=
         df.dropna(axis=0, thresh=threshold, inplace=True)
         return df
     
-    df = remove_columns(df, cols_to_remove)  # Removes Specified Columns
-    df = handle_missing_values(df, prop_required_column, prop_required_row) # Removes Specified Rows
+    remove_columns(df, cols_to_remove)  # Removes Specified Columns
+    handle_missing_values(df, prop_required_column, prop_required_row) # Removes Specified Rows
     df.dropna(inplace=True) # Drops all Null Values From Dataframe
-    return df
 
-def rename_columns(df):
+def cat_variables(df):
     '''
-    This function renames duplicate columns (id) and deletes duplicate values (pid)
+    This function take categorical variables and splits them in to cat.codes for modeling
     '''
-    df.columns = ['parcelid', 'typeconstructiontypeid', 'storytypeid',
-            'propertylandusetypeid', 'heatingorsystemtypeid', 'buildingclasstypeid',
-            'architecturalstyletypeid', 'airconditioningtypeid', 'id_delete',
-            'basementsqft', 'bathroomcnt', 'bedroomcnt', 'buildingqualitytypeid',
-            'calculatedbathnbr', 'decktypeid', 'finishedfloor1squarefeet',
-            'calculatedfinishedsquarefeet', 'finishedsquarefeet12',
-            'finishedsquarefeet13', 'finishedsquarefeet15', 'finishedsquarefeet50',
-            'finishedsquarefeet6', 'fips', 'fireplacecnt', 'fullbathcnt',
-            'garagecarcnt', 'garagetotalsqft', 'hashottuborspa', 'latitude',
-            'longitude', 'lotsizesquarefeet', 'poolcnt', 'poolsizesum',
-            'pooltypeid10', 'pooltypeid2', 'pooltypeid7',
-            'propertycountylandusecode', 'propertyzoningdesc',
-            'rawcensustractandblock', 'regionidcity', 'regionidcounty',
-            'regionidneighborhood', 'regionidzip', 'roomcnt', 'threequarterbathnbr',
-            'unitcnt', 'yardbuildingsqft17', 'yardbuildingsqft26', 'yearbuilt',
-            'numberofstories', 'fireplaceflag', 'structuretaxvaluedollarcnt',
-            'taxvaluedollarcnt', 'assessmentyear', 'landtaxvaluedollarcnt',
-            'taxamount', 'taxdelinquencyflag', 'taxdelinquencyyear',
-            'censustractandblock', 'id', 'logerror', 'pid', 'tdate',
-            'airconditioningdesc', 'architecturalstyledesc', 'buildingclassdesc',
-            'heatingorsystemdesc', 'propertylandusedesc', 'storydesc',
-            'typeconstructiondesc']
-    df.drop(columns = ['id_delete','pid'], inplace = True)
-    df = df.drop(df.index[[77380]], inplace = True) # One Value from 2018 that slipped through
-    return df
+    df["propertycountylandusecode"] = df["propertycountylandusecode"].astype('category')
+    df["propertycountylandusecode"] = df["propertycountylandusecode"].cat.codes
+    df["propertyzoningdesc"] = df["propertyzoningdesc"].astype('category')
+    df["propertyzoningdesc"] = df["propertyzoningdesc"].cat.codes
+    df["tdate"] = df["tdate"].astype('category')
+    df["tdate"] = df["tdate"].cat.codes
+    df["heatingorsystemdesc"] = df["heatingorsystemdesc"].astype('category')
+    df["heatingorsystemdesc"] = df["heatingorsystemdesc"].cat.codes
+    df["propertylandusedesc"] = df["propertylandusedesc"].astype('category')
+    df["propertylandusedesc"] = df["propertylandusedesc"].cat.codes
+    df["fips"] = df["fips"].astype('category')
+    df["fips"] = df["fips"].cat.codes # Not a Number
+    df["regionidcity"] = df["regionidcity"].astype('category')
+    df["regionidcity"] = df["regionidcity"].cat.codes # Not a Number
+    df["regionidcounty"] = df["regionidcounty"].astype('category')
+    df["regionidcounty"] = df["regionidcounty"].cat.codes # Not a Number
+    df["regionidzip"] = df["regionidzip"].astype('category')
+    df["regionidzip"] = df["regionidzip"].cat.codes # Not a Number
+    df["yearbuilt"] = df["yearbuilt"].astype('category')
+    df["yearbuilt"] = df["yearbuilt"].cat.codes # Not a Number    
 
 def split_df(df):
     '''
@@ -133,20 +156,7 @@ def split_df(df):
     # split dataset
     train_validate, test = train_test_split(df, test_size = .2, random_state = 123)
     train, validate = train_test_split(train_validate, test_size = .3, random_state = 123)
-    return train, validate, test
-
-def cat_variables(df):
-    '''
-    This function turns all categorical variables in to cat code columns
-    '''
-    for col_name in df.columns:
-        if(df[col_name].dtype == 'object'):
-            df[col_name]= df[col_name].astype('category')
-            df[col_name] = df[col_name].cat.codes
-        else:
-            df[col_name]= df[col_name].astype('category')
-            df[col_name] = df[col_name].cat.codes
-    return df
+    return train, validate, test    
 
 def scale_df(train, validate, test):
     '''
@@ -160,48 +170,28 @@ def scale_df(train, validate, test):
 
     # Scale data
     scaler = MinMaxScaler(copy=True).fit(X_train)
-
     X_train_scaled = scaler.transform(X_train)
     X_validate_scaled = scaler.transform(X_validate)
     X_test_scaled = scaler.transform(X_test)
-
     X_train_scaled = pd.DataFrame(X_train_scaled, columns = X_train.columns.values).set_index([X_train.index.values])
-
     X_validate_scaled = pd.DataFrame(X_validate_scaled, columns= X_validate.columns.values).set_index([X_validate.index.values])
-
     X_test_scaled = pd.DataFrame(X_test_scaled, columns= X_test.columns.values).set_index([X_test.index.values])
-    
     return X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled
-
 
 def wrangle_zillow(df):
     '''
-    This function takes a SQL querry and returns several split and scaled dataframes
+    This function takes in a dataframe and prep, splits, and scales the data
     '''
-    # Rename columns with duplicate id's
-    df = rename_columns(df)
-
-    # Rescale lat and long
-    #df.latitude = df.latitude / 1000000
-    #df.longitude = df.longitude / 1000000
-
-    # Prep Data Function
-    df = data_prep(df)
-    
-    # Convert categorical colums to cat codes
-    df = cat_variables(df)
-    
-    # split dataset
+    rename_columns(df)
+    data_prep(df)
+    cat_variables(df)
     train, validate, test = split_df(df)
-    
-    # scale dataset
     X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled = scale_df(train, validate, test)
-
     return df, X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled
 
 # df, X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled = wrangle_zillow.wrangle_zillow(acquire.get_zillow_data(cached=False)) | To call function
 
-    ################## Explore ####################
+################## Explore ####################
 
 def count_and_percent_missing_row(df):
     '''
@@ -260,38 +250,52 @@ def df_summary(df):
 
 # df_summary(df) | To call function
 
-######################################
+################## Outliers and IQR #################### STEP #1
 
-def quartiles_and_outliers(df):
-    def get_upper_outliers(s, k):
-        '''
-        Given a series and a cutoff value, k, returns the upper outliers for the
-        series.
+def get_upper_outliers(s, k):  
+    '''
+    Given a series and a cutoff value, k, returns the upper outliers for the
+    series.
 
-        The values returned will be either 0 (if the point is not an outlier), or a
-        number that indicates how far away from the upper bound the observation is.
-        '''
-        q1, q3 = s.quantile([.25, .75])
-        iqr = q3 - q1
-        upper_bound = q3 + k * iqr
-        return s.apply(lambda x: max([x - upper_bound, 0]))
+    The values returned will be either 0 (if the point is not an outlier), or a
+    number that indicates how far away from the upper bound the observation is.
+    '''
+    q1, q3 = s.quantile([.25, .75])
+    iqr = q3 - q1
+    upper_bound = q3 + k * iqr
+    return s.apply(lambda x: max([x - upper_bound, 0]))
 
-    def add_upper_outlier_columns(df, k):
-        '''
-        Add a column with the suffix _outliers for all the numeric columns
-        in the given dataframe.
-        '''
-        # outlier_cols = {col + '_outliers': get_upper_outliers(df[col], k)
-        #                 for col in df.select_dtypes('number')}
-        # return df.assign(**outlier_cols)
-        for col in df.select_dtypes('number'):
-            df[col + '_outliers'] = get_upper_outliers(df[col], k)
-        return df
+def add_upper_outlier_columns(df, k): # Call This Function First
+    '''
+    Add a column with the suffix _outliers for all the numeric columns
+    in the given dataframe.
+    '''
+    # outlier_cols = {col + '_outliers': get_upper_outliers(df[col], k)
+    #                 for col in df.select_dtypes('number')}
+    # return df.assign(**outlier_cols)
+    for col in df.select_dtypes('number'):
+        df[col + '_outliers'] = get_upper_outliers(df[col], k)
+    return df
 
-    add_upper_outlier_columns(df, k=1.5)    
-    outlier_cols = [col for col in df if col.endswith('_outliers')]
-    for col in outlier_cols:
-        print('~~~\n' + col)
-        data = df[col][df[col] > 0]
-        print(data.describe())
-# quartiles_and_outliers(df) | To call function
+# add_upper_outlier_columns(X_train_explore, k=1.5) ** This is how to call the function
+
+###################################### STEP #2 
+# In the next cell type the following
+'''
+'''
+#This text prints information regrding the outlier columns created
+'''
+add_upper_outlier_columns(df, k=1.5)    
+outlier_cols = [col for col in df if col.endswith('_outliers')]
+for col in outlier_cols:
+    print('~~~\n' + col)
+    data = df[col][df[col] > 0]
+    print(data.describe())
+'''
+###################################### STEP #3
+
+# Print this code to remove colums in dataframe
+'''
+X_train_explore.drop([x for x in df if x.endswith('_outliers')], 1, inplace = True)
+'''
+
