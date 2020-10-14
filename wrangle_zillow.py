@@ -233,10 +233,11 @@ def wrangle_zillow(df):
         train[col].fillna(median, inplace=True)
         validate[col].fillna(median, inplace=True)
         test[col].fillna(median, inplace=True)
-
-    cat_variables(train, validate, test)
-    X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled = scale_df(train, validate, test)
-    return df, X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled
+    
+    return train, validate, test
+    #cat_variables(train, validate, test)
+    #X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled = scale_df(train, validate, test)
+    #return df, X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled
 
 # df, X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled = wrangle_zillow.wrangle_zillow(acquire.get_zillow_data(cached=False)) | To call function
 
