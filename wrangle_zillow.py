@@ -25,39 +25,21 @@ def new_zillow_data():
     write it to a csv file, and returns the df. 
     '''
     sql_query = '''
-                
-
-select * from properties_2017
-
+                select * from properties_2017
                 join (select id, logerror, pid, tdate from predictions_2017 pred_2017
-
                 join (SELECT parcelid as pid, Max(transactiondate) as tdate FROM predictions_2017 GROUP BY parcelid) as sq1
-
                 on (pred_2017.parcelid = sq1.pid and pred_2017.transactiondate = sq1.tdate)) as sq2
-
                 on (properties_2017.parcelid = sq2.pid)
-
                 left join airconditioningtype using (airconditioningtypeid)
-
                 left join architecturalstyletype using (architecturalstyletypeid)
-
                 left join buildingclasstype using (buildingclasstypeid)
-
                 left join heatingorsystemtype using (heatingorsystemtypeid)
-
                 left join propertylandusetype using (propertylandusetypeid)
-
                 left join storytype using (storytypeid)
-
                 left join typeconstructiontype using (typeconstructiontypeid)
-
                 left join unique_properties using (parcelid)
-
                 where latitude is not null and longitude is not null
-
                 and tdate between '2017-01-01' and '2017-12-31';
-
-
                 '''
     df = pd.read_sql(sql_query, get_connection('zillow'))
     df.to_csv('zillow_df.csv')
@@ -76,34 +58,22 @@ def get_zillow_data(cached=False):
 
 #################### Prepare ##################
 
-def rename_columns(df):
+def label_county(row):
+    if row['fips'] == 6037:
+        return 'Los Angeles'
+    elif row['fips'] == 6059:
+        return 'Orange'
+    elif row['fips'] == 6111:
+        return 'Ventura'
+
+def modify_columns(df):
     '''
-    This function renames and drops colums that are duplicated
+    This function drops colums that are duplicated or unneessary
     '''
-    df.columns = ['parcelid', 'typeconstructiontypeid', 'storytypeid',
-           'propertylandusetypeid', 'heatingorsystemtypeid', 'buildingclasstypeid',
-           'architecturalstyletypeid', 'airconditioningtypeid', 'id_delete',
-           'basementsqft', 'bathroomcnt', 'bedroomcnt', 'buildingqualitytypeid',
-           'calculatedbathnbr', 'decktypeid', 'finishedfloor1squarefeet',
-           'calculatedfinishedsquarefeet', 'finishedsquarefeet12',
-           'finishedsquarefeet13', 'finishedsquarefeet15', 'finishedsquarefeet50',
-           'finishedsquarefeet6', 'fips', 'fireplacecnt', 'fullbathcnt',
-           'garagecarcnt', 'garagetotalsqft', 'hashottuborspa', 'latitude',
-           'longitude', 'lotsizesquarefeet', 'poolcnt', 'poolsizesum',
-           'pooltypeid10', 'pooltypeid2', 'pooltypeid7',
-           'propertycountylandusecode', 'propertyzoningdesc',
-           'rawcensustractandblock', 'regionidcity', 'regionidcounty',
-           'regionidneighborhood', 'regionidzip', 'roomcnt', 'threequarterbathnbr',
-           'unitcnt', 'yardbuildingsqft17', 'yardbuildingsqft26', 'yearbuilt',
-           'numberofstories', 'fireplaceflag', 'structuretaxvaluedollarcnt',
-           'taxvaluedollarcnt', 'assessmentyear', 'landtaxvaluedollarcnt',
-           'taxamount', 'taxdelinquencyflag', 'taxdelinquencyyear',
-           'censustractandblock', 'id', 'logerror', 'pid', 'tdate',
-           'airconditioningdesc', 'architecturalstyledesc', 'buildingclassdesc',
-           'heatingorsystemdesc', 'propertylandusedesc', 'storydesc',
-           'typeconstructiondesc']
-    df.drop(columns = ['id_delete','pid'], inplace = True)
-    df = df.drop(df.index[[77380]], inplace = True)
+    df['county'] = df.apply(lambda row: label_county(row), axis=1)
+    df.drop(columns = ['id','pid','id.1',"propertylandusetypeid", "heatingorsystemtypeid", 'fips',"propertyzoningdesc","calculatedbathnbr"], inplace = True)
+    df.heatingorsystemdesc = df.heatingorsystemdesc.fillna("None")
+    
 
 def data_prep(df, cols_to_remove=[], prop_required_column=.5, prop_required_row=.75):
     '''
@@ -122,32 +92,73 @@ def data_prep(df, cols_to_remove=[], prop_required_column=.5, prop_required_row=
     
     remove_columns(df, cols_to_remove)  # Removes Specified Columns
     handle_missing_values(df, prop_required_column, prop_required_row) # Removes Specified Rows
-    df.dropna(inplace=True) # Drops all Null Values From Dataframe
 
-def cat_variables(df):
+def cat_variables(train, validate, test):
     '''
     This function take categorical variables and splits them in to cat.codes for modeling
     '''
-    df["propertycountylandusecode"] = df["propertycountylandusecode"].astype('category')
-    df["propertycountylandusecode"] = df["propertycountylandusecode"].cat.codes
-    df["propertyzoningdesc"] = df["propertyzoningdesc"].astype('category')
-    df["propertyzoningdesc"] = df["propertyzoningdesc"].cat.codes
-    df["tdate"] = df["tdate"].astype('category')
-    df["tdate"] = df["tdate"].cat.codes
-    df["heatingorsystemdesc"] = df["heatingorsystemdesc"].astype('category')
-    df["heatingorsystemdesc"] = df["heatingorsystemdesc"].cat.codes
-    df["propertylandusedesc"] = df["propertylandusedesc"].astype('category')
-    df["propertylandusedesc"] = df["propertylandusedesc"].cat.codes
-    df["fips"] = df["fips"].astype('category')
-    df["fips"] = df["fips"].cat.codes # Not a Number
-    df["regionidcity"] = df["regionidcity"].astype('category')
-    df["regionidcity"] = df["regionidcity"].cat.codes # Not a Number
-    df["regionidcounty"] = df["regionidcounty"].astype('category')
-    df["regionidcounty"] = df["regionidcounty"].cat.codes # Not a Number
-    df["regionidzip"] = df["regionidzip"].astype('category')
-    df["regionidzip"] = df["regionidzip"].cat.codes # Not a Number
-    df["yearbuilt"] = df["yearbuilt"].astype('category')
-    df["yearbuilt"] = df["yearbuilt"].cat.codes # Not a Number    
+    train["propertycountylandusecode"] = train["propertycountylandusecode"].astype('category')
+    train["propertycountylandusecode"] = train["propertycountylandusecode"].cat.codes
+    validate["propertycountylandusecode"] = validate["propertycountylandusecode"].astype('category')
+    validate["propertycountylandusecode"] = validate["propertycountylandusecode"].cat.codes
+    test["propertycountylandusecode"] = test["propertycountylandusecode"].astype('category')
+    test["propertycountylandusecode"] = test["propertycountylandusecode"].cat.codes
+    ############################################################################################
+    train["tdate"] = train["tdate"].astype('category')
+    train["tdate"] = train["tdate"].cat.codes
+    validate["tdate"] = validate["tdate"].astype('category')
+    validate["tdate"] = validate["tdate"].cat.codes
+    test["tdate"] = test["tdate"].astype('category')
+    test["tdate"] = test["tdate"].cat.codes
+    ############################################################################################
+    train["county"] = train["county"].astype('category')
+    train["county"] = train["county"].cat.codes
+    validate["county"] = validate["county"].astype('category')
+    validate["county"] = validate["county"].cat.codes
+    test["county"] = test["county"].astype('category')
+    test["county"] = test["county"].cat.codes
+    ############################################################################################
+    train["heatingorsystemdesc"] = train["heatingorsystemdesc"].astype('category')
+    train["heatingorsystemdesc"] = train["heatingorsystemdesc"].cat.codes
+    validate["heatingorsystemdesc"] = validate["heatingorsystemdesc"].astype('category')
+    validate["heatingorsystemdesc"] = validate["heatingorsystemdesc"].cat.codes
+    test["heatingorsystemdesc"] = test["heatingorsystemdesc"].astype('category')
+    test["heatingorsystemdesc"] = test["heatingorsystemdesc"].cat.codes
+    ############################################################################################
+    train["propertylandusedesc"] = train["propertylandusedesc"].astype('category')
+    train["propertylandusedesc"] = train["propertylandusedesc"].cat.codes
+    validate["propertylandusedesc"] = validate["propertylandusedesc"].astype('category')
+    validate["propertylandusedesc"] = validate["propertylandusedesc"].cat.codes
+    test["propertylandusedesc"] = test["propertylandusedesc"].astype('category')
+    test["propertylandusedesc"] = test["propertylandusedesc"].cat.codes
+    ############################################################################################
+    train["regionidcity"] = train["regionidcity"].astype('category')
+    train["regionidcity"] = train["regionidcity"].cat.codes # Not a Number
+    validate["regionidcity"] = validate["regionidcity"].astype('category')
+    validate["regionidcity"] = validate["regionidcity"].cat.codes # Not a Number
+    test["regionidcity"] = test["regionidcity"].astype('category')
+    test["regionidcity"] = test["regionidcity"].cat.codes # Not a Number
+    ############################################################################################
+    train["regionidcounty"] = train["regionidcounty"].astype('category')
+    train["regionidcounty"] = train["regionidcounty"].cat.codes # Not a Number
+    validate["regionidcounty"] = validate["regionidcounty"].astype('category')
+    validate["regionidcounty"] = validate["regionidcounty"].cat.codes # Not a Number
+    test["regionidcounty"] = test["regionidcounty"].astype('category')
+    test["regionidcounty"] = test["regionidcounty"].cat.codes # Not a Number
+    ############################################################################################
+    train["regionidzip"] = train["regionidzip"].astype('category')
+    train["regionidzip"] = train["regionidzip"].cat.codes # Not a Number
+    validate["regionidzip"] = validate["regionidzip"].astype('category')
+    validate["regionidzip"] = validate["regionidzip"].cat.codes # Not a Number
+    test["regionidzip"] = test["regionidzip"].astype('category')
+    test["regionidzip"] = test["regionidzip"].cat.codes # Not a Number
+    ############################################################################################
+    train["yearbuilt"] = train["yearbuilt"].astype('category')
+    train["yearbuilt"] = train["yearbuilt"].cat.codes # Not a Number   
+    validate["yearbuilt"] = validate["yearbuilt"].astype('category')
+    validate["yearbuilt"] = validate["yearbuilt"].cat.codes # Not a Number 
+    test["yearbuilt"] = test["yearbuilt"].astype('category')
+    test["yearbuilt"] = test["yearbuilt"].cat.codes # Not a Number  
 
 def split_df(df):
     '''
@@ -182,10 +193,48 @@ def wrangle_zillow(df):
     '''
     This function takes in a dataframe and prep, splits, and scales the data
     '''
-    rename_columns(df)
+    modify_columns(df)
     data_prep(df)
-    cat_variables(df)
     train, validate, test = split_df(df)
+    # Categorical/Discrete columns to use mode to replace nulls
+
+    cols = [
+        "buildingqualitytypeid",
+        "regionidcity",
+        "regionidzip",
+        "yearbuilt",
+        "regionidcity",
+        "censustractandblock"
+    ]
+
+    for col in cols:
+        mode = int(train[col].mode()) # I had some friction when this returned a float (and there were no decimals anyways)
+        train[col].fillna(value=mode, inplace=True)
+        validate[col].fillna(value=mode, inplace=True)
+        test[col].fillna(value=mode, inplace=True)
+
+    # Continuous valued columns to use median to replace nulls
+
+    cols = [
+        "structuretaxvaluedollarcnt",
+        "taxamount",
+        "taxvaluedollarcnt",
+        "landtaxvaluedollarcnt",
+        "structuretaxvaluedollarcnt",
+        "finishedsquarefeet12",
+        "calculatedfinishedsquarefeet",
+        "fullbathcnt",
+        "lotsizesquarefeet"
+    ]
+
+
+    for col in cols:
+        median = train[col].median()
+        train[col].fillna(median, inplace=True)
+        validate[col].fillna(median, inplace=True)
+        test[col].fillna(median, inplace=True)
+
+    cat_variables(train, validate, test)
     X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled = scale_df(train, validate, test)
     return df, X_train_explore, X_train_scaled, X_validate_scaled, X_test_scaled
 
@@ -193,26 +242,18 @@ def wrangle_zillow(df):
 
 ################## Explore ####################
 
-def count_and_percent_missing_row(df):
-    '''
-    This function determines the count and percentage of rows are missing
-    '''
-    percent_missing = df.isnull().sum() * 100 / len(df)
-    total_missing = df.isnull().sum()
-    missing_value_df = pd.DataFrame({'num_rows_missing': total_missing,
-                                     'pct_rows_missing': percent_missing})
-    return missing_value_df
+def nulls_by_col(df):
+    num_missing = df.isnull().sum()
+    rows = df.shape[0]
+    pct_missing = num_missing / rows
+    cols_missing = pd.DataFrame({'number_missing_rows': num_missing, 'percent_rows_missing': pct_missing})
+    return cols_missing
 
-def nulls_finder_column(df):
-    rows = pd.DataFrame()    
-    rows['num_cols_missing'] = df.isnull().sum(axis=1)    
-    rows['pct_cols_missing'] = df.isnull().sum(axis=1) / df.shape[1]    
-    num_rows = rows.groupby('num_cols_missing').count()    
-    num_rows = num_rows.rename(columns ={'pct_cols_missing': 'num_rows'})    
-    pct_cols = rows.groupby('num_cols_missing').mean()    
-    result = pd.concat([pct_cols, num_rows], axis=1, sort=False)    
-    result = result.reset_index()
-    return result
+def nulls_by_row(df):
+    num_cols_missing = df.isnull().sum(axis=1)
+    pct_cols_missing = df.isnull().sum(axis=1)/df.shape[1]*100
+    rows_missing = pd.DataFrame({'num_cols_missing': num_cols_missing, 'pct_cols_missing': pct_cols_missing}).reset_index().groupby(['num_cols_missing','pct_cols_missing']).count().rename(index=str, columns={'index': 'num_rows'}).reset_index()
+    return rows_missing 
 
 def df_summary(df):
     '''
@@ -232,14 +273,6 @@ def df_summary(df):
     print('\n')
     print('Number of NaN values per row:')  
     print(df.isnull().sum(axis=1))   # NaN by row
-    print('\n')
-    print('Count and percent missing per row')
-    print(count_and_percent_missing_row(df))
-    print('\n')
-    print('Count and percent missing per column')
-    print(nulls_finder_column(df)
-    print('\n')
-    print('Value Counts per Column:')
     for col in df.columns:
         print('-' * 40 + col + '-' * 40 , end=' - ')
         display(df[col].value_counts(dropna=False).head(10))
