@@ -73,6 +73,8 @@ def modify_columns(df):
     df['county'] = df.apply(lambda row: label_county(row), axis=1)
     df.drop(columns = ['id','pid','id.1',"propertylandusetypeid", "heatingorsystemtypeid", 'fips',"propertyzoningdesc","calculatedbathnbr"], inplace = True)
     df.heatingorsystemdesc = df.heatingorsystemdesc.fillna("None")
+    df.latitude = df.latitude / 1000000
+    df.longitude = df.longitude / 1000000
     return df
 
 def split_df(df):
