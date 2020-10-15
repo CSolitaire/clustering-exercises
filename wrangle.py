@@ -71,7 +71,7 @@ def modify_columns(df):
     This function drops colums that are duplicated or unneessary
     '''
     df['county'] = df.apply(lambda row: label_county(row), axis=1)
-    df.drop(columns = ['id','pid','id.1',"propertylandusetypeid", "heatingorsystemtypeid", 'fips',"propertyzoningdesc","calculatedbathnbr"], inplace = True)
+    df.drop(columns = ['id','pid','id.1',"propertylandusetypeid", "heatingorsystemtypeid",'fips',"propertyzoningdesc","calculatedbathnbr"], inplace = True)
     df.heatingorsystemdesc = df.heatingorsystemdesc.fillna("None")
     df.latitude = df.latitude / 1000000
     df.longitude = df.longitude / 1000000
@@ -141,19 +141,27 @@ def post_selection_processing(train, validate, test):
     
     cols = ["yearbuilt","calculatedfinishedsquarefeet","regionidzip",
             "bathroomcnt","bedroomcnt","lotsizesquarefeet","rawcensustractandblock",
-            "regionidcity","roomcnt","unitcnt","assessmentyear"]
+            "roomcnt","unitcnt","assessmentyear"]
     train[cols] = train[cols].astype('int')
     validate[cols] = validate[cols].astype('int')
     test[cols] = test[cols].astype('int')
+    return train, validate, test 
+
+def cat_columns(train, validate, test):
+    cols = ["regionidzip","heatingorsystemdesc","propertylandusedesc","county"]
+    train[cols] = train[cols].astype("category")
+    validate[cols] = validate[cols].astype("category")
+    test[cols] = test[cols].astype("category")
     return train, validate, test 
 
 def clean_zillow(df):
     modify_columns(df)
     train, validate, test = split_df(df)
     train, validate, test = clean_data(train, validate, test)
-    train, validate, test = remove_columns(train, validate, test, cols_to_remove=['buildingqualitytypeid','finishedsquarefeet12','fullbathcnt', 'regionidcounty'])
+    train, validate, test = remove_columns(train, validate, test, cols_to_remove=['buildingqualitytypeid','finishedsquarefeet12','fullbathcnt', 'regionidcounty',"regionidcity",'tdate', 'parcelid', 'propertycountylandusecode'])
     train, validate, test = handle_missing_values(train, validate, test)
     train, validate, test = post_selection_processing(train, validate, test)
+    train, validate, test = cat_columns(train, validate, test)
     return train, validate, test  
 
 
@@ -230,7 +238,7 @@ def add_upper_outlier_columns(df, k): # Call This Function First
 '''
 #This text prints information regrding the outlier columns created 
 '''
-wrangle.add_upper_outlier_columns(df, k=1.5)    
+wrangle.add_upper_outlier_columns(df, k=3)    
 outlier_cols = [col for col in df if col.endswith('_outliers')]
 for col in outlier_cols:
     print('~~~\n' + col)
