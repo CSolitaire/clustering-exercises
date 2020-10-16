@@ -89,7 +89,7 @@ def remove_outliers(df):
     '''
     remove outliers in bed, bath, zip, square feet, acres & tax rate
     '''
-    df[((train.bathroomcnt <= 7) & (df.bedroomcnt <= 7) & 
+    df[((df.bathroomcnt <= 7) & (df.bedroomcnt <= 7) & 
                (df.regionidzip < 100000) & 
                (df.bathroomcnt > 0) & 
                (df.bedroomcnt > 0) & 
