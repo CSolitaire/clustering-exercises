@@ -154,6 +154,67 @@ def cat_columns(train, validate, test):
     test[cols] = test[cols].astype("category")
     return train, validate, test 
 
+def create_features(train, validate, test):
+    train['age'] = 2017 - train.yearbuilt
+    validate['age'] = 2017 - validate.yearbuilt
+    test['age'] = 2017 - test.yearbuilt
+    # create taxrate variable
+    train['taxrate'] = train.taxamount/train.taxvaluedollarcnt
+    validate['taxrate'] = validate.taxamount/validate.taxvaluedollarcnt
+    test['taxrate'] = test.taxamount/test.taxvaluedollarcnt
+    # create acres variable
+    train['acres'] = train.lotsizesquarefeet/43560
+    validate['acres'] = validate.lotsizesquarefeet/43560
+    test['acres'] = test.lotsizesquarefeet/43560
+    # dollar per square foot-structure
+    train['structure_dollar_per_sqft'] = train.structuretaxvaluedollarcnt/train.calculatedfinishedsquarefeet
+    validate['structure_dollar_per_sqft'] = validate.structuretaxvaluedollarcnt/validate.calculatedfinishedsquarefeet
+    test['structure_dollar_per_sqft'] = test.structuretaxvaluedollarcnt/test.calculatedfinishedsquarefeet
+    # dollar per square foot-land
+    train['land_dollar_per_sqft'] = train.landtaxvaluedollarcnt/train.lotsizesquarefeet
+    validate['land_dollar_per_sqft'] = validate.landtaxvaluedollarcnt/validate.lotsizesquarefeet
+    test['land_dollar_per_sqft'] = test.landtaxvaluedollarcnt/test.lotsizesquarefeet
+    # ratio of beds to baths
+    train['bed_bath_ratio'] = train.bedroomcnt/train.bathroomcnt
+    validate['bed_bath_ratio'] = validate.bedroomcnt/validate.bathroomcnt
+    test['bed_bath_ratio'] = test.bedroomcnt/test.bathroomcnt
+    return train, validate, test
+
+def remove_outliers(train, validate, test ):
+    '''
+    remove outliers in bed, bath, zip, square feet, acres & tax rate
+    '''
+    train[((train.bathroomcnt <= 7) & (train.bedroomcnt <= 7) & 
+               (train.regionidzip < 100000) & 
+               (train.bathroomcnt > 0) & 
+               (train.bedroomcnt > 0) & 
+               (train.acres < 10) &
+               (train.calculatedfinishedsquarefeet < 7000) & 
+               (train.taxrate < .05)
+              )]
+     
+    validate[((validate.bathroomcnt <= 7) & (validate.bedroomcnt <= 7) & 
+               (validate.regionidzip < 100000) & 
+               (validate.bathroomcnt > 0) & 
+               (validate.bedroomcnt > 0) & 
+               (validate.acres < 10) &
+               (validate.calculatedfinishedsquarefeet < 7000) & 
+               (validate.taxrate < .05)
+              )]
+    
+    test[((test.bathroomcnt <= 7) & (test.bedroomcnt <= 7) & 
+               (test.regionidzip < 100000) & 
+               (test.bathroomcnt > 0) & 
+               (test.bedroomcnt > 0) & 
+               (test.acres < 10) &
+               (test.calculatedfinishedsquarefeet < 7000) & 
+               (test.taxrate < .05)
+              )]
+    
+    return train, validate, test
+
+
+
 def clean_zillow(df):
     modify_columns(df)
     train, validate, test = split_df(df)
@@ -161,12 +222,74 @@ def clean_zillow(df):
     train, validate, test = remove_columns(train, validate, test, cols_to_remove=['buildingqualitytypeid','finishedsquarefeet12','fullbathcnt', 'regionidcounty',"regionidcity",'tdate', 'parcelid', 'propertycountylandusecode'])
     train, validate, test = handle_missing_values(train, validate, test)
     train, validate, test = post_selection_processing(train, validate, test)
-    train, validate, test = cat_columns(train, validate, test)
+    train, validate, test = create_features(train, validate, test)
+    train, validate, test = remove_outliters(train, validate, test)
+    #train, validate, test = cat_columns(train, validate, test)
     return train, validate, test  
 
-# function cat.codes
-# Scale
+def catcode_zillow(train, validate, test):
+    '''
+    This function take train dataset and  categorical variables and splits them in to cat.codes for modeling
+    '''
+    ############################################################################################
+    ############################################################################################
+    train["county"] = train["county"].cat.codes
+    validate["county"] = validate["county"].cat.codes
+    test["county"] = test["county"].cat.codes
+    ############################################################################################
+    train["heatingorsystemdesc"] = train["heatingorsystemdesc"].cat.codes
+    validate["heatingorsystemdesc"] = validate["heatingorsystemdesc"].cat.codes
+    test["heatingorsystemdesc"] = test["heatingorsystemdesc"].cat.codes
+    ############################################################################################
+    train["propertylandusedesc"] = train["propertylandusedesc"].cat.codes
+    validate["propertylandusedesc"] = validate["propertylandusedesc"].cat.codes
+    test["propertylandusedesc"] = test["propertylandusedesc"].cat.codes
+    ############################################################################################
+    train["regionidzip"] = train["regionidzip"].cat.codes 
+    validate["regionidzip"] = validate["regionidzip"].cat.codes 
+    test["regionidzip"] = test["regionidzip"].cat.codes 
+    ############################################################################################
+    train["yearbuilt"] = train["yearbuilt"].cat.codes 
+    validate["yearbuilt"] = validate["yearbuilt"].cat.codes 
+    test["yearbuilt"] = test["yearbuilt"].cat.codes  
+    
+    return train, validate, test
 
+def scale_df(train, validate, test):
+    '''
+    This function scales data using the MinMaxScaler
+    '''
+    # Assign variables
+    X_train = train
+    X_validate = validate
+    X_test = test
+
+    # # Might be usefull later
+    # scaler = StandardScaler()
+    # cols = ['age', 'bmi', 'charges']
+    # train_scaled = train.copy()
+    # train_scaled[cols] = scaler.fit_transform(train[cols])
+    
+    # Scale data
+    scaler = MinMaxScaler(copy=True).fit(X_train)
+    X_train_scaled = scaler.transform(X_train)
+    X_validate_scaled = scaler.transform(X_validate)
+    X_test_scaled = scaler.transform(X_test)
+    X_train_scaled = pd.DataFrame(X_train_scaled, columns = X_train.columns.values).set_index([X_train.index.values])
+    X_validate_scaled = pd.DataFrame(X_validate_scaled, columns= X_validate.columns.values).set_index([X_validate.index.values])
+    X_test_scaled = pd.DataFrame(X_test_scaled, columns= X_test.columns.values).set_index([X_test.index.values])
+    return X_train_scaled, X_validate_scaled, X_test_scaled
+
+def county_scaler(train):
+    '''
+    Small scaler for county data
+    '''
+    X_train = train
+    # Scale data
+    scaler = MinMaxScaler(copy=True).fit(X_train)
+    X_train_scaled = scaler.transform(X_train)
+    X_train_scaled = pd.DataFrame(X_train_scaled, columns = X_train.columns.values).set_index([X_train.index.values])
+    return X_train_scaled
 ################## Explore ####################
 
 def nulls_by_col(df):
