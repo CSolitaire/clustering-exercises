@@ -213,7 +213,17 @@ def remove_outliers(train, validate, test ):
     
     return train, validate, test
 
+def col_to_drop_post_processing(train, validate, test):
+    cols_to_drop = ['bedroomcnt', 'taxamount', 
+               'taxvaluedollarcnt', 'structuretaxvaluedollarcnt',
+               'landtaxvaluedollarcnt', 'yearbuilt', 
+               'lotsizesquarefeet','regionidzip']
 
+    train = train.drop(columns = cols_to_drop)
+    validate = validate.drop(columns = cols_to_drop)
+    test = test.drop(columns = cols_to_drop)
+    
+    return train, validate, test
 
 def clean_zillow(df):
     modify_columns(df)
@@ -223,7 +233,8 @@ def clean_zillow(df):
     train, validate, test = handle_missing_values(train, validate, test)
     train, validate, test = post_selection_processing(train, validate, test)
     train, validate, test = create_features(train, validate, test)
-    train, validate, test = remove_outliters(train, validate, test)
+    train, validate, test = remove_outliers(train, validate, test)
+    train, validate, test = col_to_drop_post_processing(train, validate, test)
     #train, validate, test = cat_columns(train, validate, test)
     return train, validate, test  
 
