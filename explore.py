@@ -19,9 +19,9 @@ def counties_no_outliers(train):
         # Remove Outliers (Train) Using IQR
         
         # Make new dataframe from categorical variables
-        cat_df_la = la_train_df[["regionidzip","county","propertylandusedesc","heatingorsystemdesc"]].copy()
+        cat_df_la = la_train_df[["regionidzip","county","propertylandusedesc","heatingorsystemdesc", "yearbuilt"]].copy()
         # remove categorical variavbles for outlier examination
-        la_df = la_train_df.drop(columns=["regionidzip","county","propertylandusedesc","heatingorsystemdesc"])
+        la_df = la_train_df.drop(columns=["regionidzip","county","propertylandusedesc","heatingorsystemdesc","yearbuilt"])
         # Drop Outliers in Dataframe (Set = 6)
         Q1 = la_train_df.quantile(0.25)
         Q3 = la_train_df.quantile(0.75)
@@ -39,9 +39,9 @@ def counties_no_outliers(train):
         # Remove Outliers (Train) Using IQR
         
         # Make new dataframe from categorical variables
-        cat_df_vc = vc_train_df[["regionidzip","county","propertylandusedesc","heatingorsystemdesc"]].copy()
+        cat_df_vc = vc_train_df[["regionidzip","county","propertylandusedesc","heatingorsystemdesc","yearbuilt"]].copy()
         # remove categorical variavbles for outlier examination
-        vc_df = vc_train_df.drop(columns=["regionidzip","county","propertylandusedesc","heatingorsystemdesc"])
+        vc_df = vc_train_df.drop(columns=["regionidzip","county","propertylandusedesc","heatingorsystemdesc","yearbuilt"])
         # Drop Outliers in Dataframe (Set = 6)
         Q1 = vc_train_df.quantile(0.25)
         Q3 = vc_train_df.quantile(0.75)
@@ -59,9 +59,9 @@ def counties_no_outliers(train):
         # Remove Outliers (Train) Using IQR
         
         # Make new dataframe from categorical variables
-        cat_df_oc = oc_train_df[["regionidzip","county","propertylandusedesc","heatingorsystemdesc"]].copy()
+        cat_df_oc = oc_train_df[["regionidzip","county","propertylandusedesc","heatingorsystemdesc","yearbuilt"]].copy()
         # remove categorical variavbles for outlier examination
-        oc_df = oc_train_df.drop(columns=["regionidzip","county","propertylandusedesc","heatingorsystemdesc"])
+        oc_df = oc_train_df.drop(columns=["regionidzip","county","propertylandusedesc","heatingorsystemdesc","yearbuilt"])
         # Drop Outliers in Dataframe (Set = 6)
         Q1 = oc_train_df.quantile(0.25)
         Q3 = oc_train_df.quantile(0.75)

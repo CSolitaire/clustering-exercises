@@ -148,7 +148,7 @@ def post_selection_processing(train, validate, test):
     return train, validate, test 
 
 def cat_columns(train, validate, test):
-    cols = ["regionidzip","heatingorsystemdesc","propertylandusedesc","county"]
+    cols = ["regionidzip","heatingorsystemdesc","propertylandusedesc","county","yearbuilt"]
     train[cols] = train[cols].astype("category")
     validate[cols] = validate[cols].astype("category")
     test[cols] = test[cols].astype("category")
@@ -164,6 +164,8 @@ def clean_zillow(df):
     train, validate, test = cat_columns(train, validate, test)
     return train, validate, test  
 
+# function cat.codes
+# Scale
 
 ################## Explore ####################
 
