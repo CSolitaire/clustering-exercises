@@ -70,4 +70,7 @@ def counties_no_outliers(train):
         oc_train_df = pd.concat([oc_df_out, cat_df_oc], axis=1).reindex(oc_df_out.index)
         return oc_train_df
 
+    la_train_df = la_county(train)
+    vc_train_df = vc_county(train)
+    oc_train_df = oc_county(train)
     return la_train_df, vc_train_df, oc_train_df
